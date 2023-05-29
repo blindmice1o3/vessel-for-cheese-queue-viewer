@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <androidx.constraintlayout.widget.Guideline
+        android:id="@+id/gl_vertical_percent_25"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        app:layout_constraintGuide_percent="0.25" />
+
+    <androidx.constraintlayout.widget.Guideline
+        android:id="@+id/gl_vertical_percent_75"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        app:layout_constraintGuide_percent="0.75" />
+
+    <androidx.constraintlayout.widget.Guideline
+        android:id="@+id/gl_horizontal_percent_3334"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        app:layout_constraintGuide_percent="0.3334" />
+
+    <androidx.constraintlayout.widget.Guideline
+        android:id="@+id/gl_horizontal_percent_6667"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        app:layout_constraintGuide_percent="0.6667" />
+
+    <TextView
+        android:id="@+id/tv_add_meal_name"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="name: "
+        app:layout_constraintBottom_toTopOf="@id/tv_add_meal_size"
+        app:layout_constraintEnd_toStartOf="@id/gl_vertical_percent_25"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <EditText
+        android:id="@+id/et_add_meal_name"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:background="@color/purple_200"
+        android:hint="NAME"
+        android:inputType="text"
+        app:layout_constraintBottom_toBottomOf="@id/tv_add_meal_name"
+        app:layout_constraintEnd_toStartOf="@id/gl_vertical_percent_75"
+        app:layout_constraintStart_toEndOf="@id/gl_vertical_percent_25"
+        app:layout_constraintTop_toTopOf="@id/tv_add_meal_name" />
+
+    <TextView
+        android:id="@+id/tv_add_meal_size"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="size: "
+        app:layout_constraintBottom_toTopOf="@id/tv_add_meal_drink"
+        app:layout_constraintEnd_toStartOf="@id/gl_vertical_percent_25"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/tv_add_meal_name" />
+
+    <EditText
+        android:id="@+id/et_add_meal_size"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:background="@color/purple_700"
+        android:hint="SIZE"
+        android:inputType="number"
+        app:layout_constraintBottom_toBottomOf="@id/tv_add_meal_size"
+        app:layout_constraintEnd_toStartOf="@id/gl_vertical_percent_75"
+        app:layout_constraintStart_toEndOf="@id/gl_vertical_percent_25"
+        app:layout_constraintTop_toTopOf="@id/tv_add_meal_size" />
+
+    <TextView
+        android:id="@+id/tv_add_meal_drink"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="drink: "
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toStartOf="@id/gl_vertical_percent_25"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/tv_add_meal_size" />
+
+    <EditText
+        android:id="@+id/et_add_meal_drink"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:background="@color/purple_500"
+        android:hint="DRINK"
+        android:inputType="text"
+        app:layout_constraintBottom_toBottomOf="@id/tv_add_meal_drink"
+        app:layout_constraintEnd_toStartOf="@id/gl_vertical_percent_75"
+        app:layout_constraintStart_toEndOf="@id/gl_vertical_percent_25"
+        app:layout_constraintTop_toTopOf="@id/tv_add_meal_drink" />
+
+
+    <Button
+        android:id="@+id/button_add_meal"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="add"
+        app:layout_constraintBottom_toBottomOf="@id/tv_add_meal_drink"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toEndOf="@id/gl_vertical_percent_75"
+        app:layout_constraintTop_toTopOf="@id/tv_add_meal_name" />
+
+</androidx.constraintlayout.widget.ConstraintLayout>
