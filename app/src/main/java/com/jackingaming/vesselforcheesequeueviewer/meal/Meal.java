@@ -1,4 +1,4 @@
-package com.jackingaming.vesselforcheesequeueviewer;
+package com.jackingaming.vesselforcheesequeueviewer.meal;
 
 public class Meal {
     private Long id;

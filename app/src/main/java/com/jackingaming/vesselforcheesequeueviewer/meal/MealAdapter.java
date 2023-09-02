@@ -1,4 +1,4 @@
-package com.jackingaming.vesselforcheesequeueviewer;
+package com.jackingaming.vesselforcheesequeueviewer.meal;
 
 import android.view.LayoutInflater;
 import android.view.View;
@@ -7,6 +7,8 @@ import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
+
+import com.jackingaming.vesselforcheesequeueviewer.R;
 
 import java.util.List;
 
@@ -26,9 +28,8 @@ public class MealAdapter extends RecyclerView.Adapter<MealAdapter.ViewHolder> {
     @NonNull
     @Override
     public ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        View view = LayoutInflater.from(parent.getContext())
-                .inflate(R.layout.list_item_meal, parent, false);
-
+        View view = LayoutInflater.from(parent.getContext()).inflate(
+                R.layout.list_item_meal, parent, false);
         return new ViewHolder(view);
     }
 

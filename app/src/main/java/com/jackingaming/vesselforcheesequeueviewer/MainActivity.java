@@ -1,13 +1,5 @@
 package com.jackingaming.vesselforcheesequeueviewer;
 
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
-import androidx.appcompat.app.AppCompatActivity;
-import androidx.appcompat.widget.Toolbar;
-import androidx.recyclerview.widget.DividerItemDecoration;
-import androidx.recyclerview.widget.LinearLayoutManager;
-import androidx.recyclerview.widget.RecyclerView;
-
 import android.content.Context;
 import android.os.Bundle;
 import android.util.Log;
@@ -19,24 +11,29 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Toast;
 
-import com.android.volley.AuthFailureError;
+import androidx.annotation.NonNull;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.Toolbar;
+import androidx.recyclerview.widget.DividerItemDecoration;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
+
 import com.android.volley.Request;
 import com.android.volley.RequestQueue;
 import com.android.volley.Response;
 import com.android.volley.VolleyError;
-import com.android.volley.toolbox.JsonArrayRequest;
-import com.android.volley.toolbox.StringRequest;
+import com.android.volley.toolbox.JsonObjectRequest;
 import com.android.volley.toolbox.Volley;
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.jackingaming.vesselforcheesequeueviewer.order.MenuItemInfo;
+import com.jackingaming.vesselforcheesequeueviewer.order.MenuItemInfoAdapter;
+import com.jackingaming.vesselforcheesequeueviewer.order.MenuItemInfoListWrapper;
 
-import org.json.JSONArray;
-import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
@@ -44,16 +41,19 @@ import java.util.concurrent.TimeUnit;
 
 public class MainActivity extends AppCompatActivity {
     public static final String TAG = "MainActivity";
-    public static final String URL_ADD_NEW_MEAL = "http://192.168.1.143:8080/meals/add";
-    public static final String URL_GET_ALL_MEALS = "http://192.168.1.143:8080/meals/all";
-    public static final String URL_DELETE_MEAL_BY_ID = "http://192.168.1.143:8080/meals/delete";
+    //    public static final String URL_ADD_NEW_MEAL = "http://192.168.1.143:8080/meals/add";
+//    public static final String URL_GET_ALL_MEALS = "http://192.168.1.143:8080/meals/all";
+//    public static final String URL_DELETE_MEAL_BY_ID = "http://192.168.1.143:8080/meals/delete";
+    public static final String URL_GET_ALL_ORDERS = "http://192.168.1.143:8080/orders/all";
 
     private RequestQueue requestQueue;
     private Toolbar toolbar;
     private MenuItem actionMenuItem;
 
-    private List<Meal> localData;
-    private MealAdapter mealAdapter;
+    //    private List<Meal> localData;
+//    private MealAdapter mealAdapter;
+    private List<MenuItemInfo> menuItemInfos;
+    private MenuItemInfoAdapter adapter;
     private LinearLayoutManager linearLayoutManager;
     private DividerItemDecoration dividerItemDecoration;
     private RecyclerView recyclerView;
@@ -65,37 +65,47 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         Log.i(TAG, "onCreate()");
-//        setContentView(R.layout.activity_main);
         setContentView(R.layout.fragment_meal_list);
         requestQueue = Volley.newRequestQueue(this);
 
         toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
-        localData = new ArrayList<Meal>();
-        MealAdapter.ItemClickListener itemClickListener = new MealAdapter.ItemClickListener() {
+//        localData = new ArrayList<Meal>();
+//        MealAdapter.ItemClickListener itemClickListener = new MealAdapter.ItemClickListener() {
+//            @Override
+//            public void onClick(View view, int position) {
+//                Log.i(TAG, "MealAdapter.ItemClickListener.onClick() position: " + position);
+//
+//                Meal mealToDelete = localData.get(position);
+//                Long idMealToDelete = mealToDelete.getId();
+//                requestDeleteMealById(idMealToDelete);
+//            }
+//        };
+//        Meal meal = new Meal();
+//        meal.setId(420L);
+//        meal.setName("tender");
+//        meal.setSize(4);
+//        meal.setDrink("cola");
+//        localData.add(meal);
+//        mealAdapter = new MealAdapter(localData, itemClickListener);
+        menuItemInfos = new ArrayList<>();
+        adapter = new MenuItemInfoAdapter(menuItemInfos, new MenuItemInfoAdapter.ItemClickListener() {
             @Override
             public void onClick(View view, int position) {
-                Log.i(TAG, "MealAdapter.ItemClickListener.onClick() position: " + position);
+                Log.i(TAG, "MenuItemInfoAdapter onClick()");
 
-                Meal mealToDelete = localData.get(position);
-                Long idMealToDelete = mealToDelete.getId();
-                requestDeleteMealById(idMealToDelete);
+                MenuItemInfo menuItemInfo = menuItemInfos.get(position);
+                Toast.makeText(view.getContext(), menuItemInfo.getId(), Toast.LENGTH_SHORT).show();
             }
-        };
-        Meal meal = new Meal();
-        meal.setId(420L);
-        meal.setName("tender");
-        meal.setSize(4);
-        meal.setDrink("cola");
-        localData.add(meal);
-        mealAdapter = new MealAdapter(localData, itemClickListener);
+        });
         linearLayoutManager = new LinearLayoutManager(this);
         dividerItemDecoration = new DividerItemDecoration(this, linearLayoutManager.getOrientation());
 
         recyclerView = findViewById(R.id.recyclerview);
         recyclerView.setLayoutManager(linearLayoutManager);
-        recyclerView.setAdapter(mealAdapter);
+//        recyclerView.setAdapter(mealAdapter);
+        recyclerView.setAdapter(adapter);
         recyclerView.addItemDecoration(dividerItemDecoration);
 
 //        requestGetAllMeals();
@@ -105,7 +115,8 @@ public class MainActivity extends AppCompatActivity {
                 new Runnable() {
                     @Override
                     public void run() {
-                        requestGetAllMeals();
+//                        requestGetAllMeals();
+                        requestGetAllOrders();
                     }
                 },
                 0,
@@ -155,7 +166,7 @@ public class MainActivity extends AppCompatActivity {
                 }
                 String drinkToPost = etDrink.getText().toString();
 
-                requestPostMeal(actionMenuItem, nameToPost, sizeToPost, drinkToPost);
+//                requestPostMeal(actionMenuItem, nameToPost, sizeToPost, drinkToPost);
             }
         });
 
@@ -197,120 +208,151 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    private void requestDeleteMealById(Long id) {
-        Log.i(TAG, "requestDeleteMealById()");
-        StringRequest stringRequest = new StringRequest(
-                Request.Method.DELETE,
-                URL_DELETE_MEAL_BY_ID + "/" + String.valueOf(id),
-                new Response.Listener<String>() {
-                    @Override
-                    public void onResponse(String response) {
-                        Log.i(TAG, "requestDeleteMealById() onResponse(): " + response);
+//    private void requestDeleteMealById(Long id) {
+//        Log.i(TAG, "requestDeleteMealById()");
+//        StringRequest stringRequest = new StringRequest(
+//                Request.Method.DELETE,
+//                URL_DELETE_MEAL_BY_ID + "/" + String.valueOf(id),
+//                new Response.Listener<String>() {
+//                    @Override
+//                    public void onResponse(String response) {
+//                        Log.i(TAG, "requestDeleteMealById() onResponse(): " + response);
+//
+//                        requestGetAllMeals();
+//                    }
+//                },
+//                new Response.ErrorListener() {
+//                    @Override
+//                    public void onErrorResponse(VolleyError error) {
+//                        Log.e(TAG, "requestDeleteMealById() onErrorResponse(): " + error);
+//                    }
+//                });
+//        requestQueue.add(stringRequest);
+//    }
 
-                        requestGetAllMeals();
-                    }
-                },
-                new Response.ErrorListener() {
-                    @Override
-                    public void onErrorResponse(VolleyError error) {
-                        Log.e(TAG, "requestDeleteMealById() onErrorResponse(): " + error);
-                    }
-                });
-        requestQueue.add(stringRequest);
-    }
+    private void requestGetAllOrders() {
+        Log.i(TAG, "requestGetAllOrders()");
 
-    private void requestGetAllMeals() {
-        Log.i(TAG, "requestGetAllMeals()");
-        JsonArrayRequest jsonArrayRequest = new JsonArrayRequest(
+        JsonObjectRequest jsonObjectRequest = new JsonObjectRequest(
                 Request.Method.GET,
-                URL_GET_ALL_MEALS,
+                URL_GET_ALL_ORDERS,
                 null,
-                new Response.Listener<JSONArray>() {
+                new Response.Listener<JSONObject>() {
                     @Override
-                    public void onResponse(JSONArray response) {
-                        Log.i(TAG, "jsonArrayRequest (onResponse)");
+                    public void onResponse(JSONObject response) {
+                        // Converts JSON string into MenuItemInfoListWrapper object
+                        Gson gson = new GsonBuilder().create();
+                        MenuItemInfoListWrapper menuItemInfoListWrapper = gson.fromJson(response.toString(), MenuItemInfoListWrapper.class);
+                        List<MenuItemInfo> menuItemInfosFromServer = menuItemInfoListWrapper.getMenuItemInfos();
 
-                        if (response.length() > 0) {
-                            Log.i(TAG, "jsonArrayRequest (onResponse): response.length == " + response.length());
-
-                            Log.i(TAG, "jsonArrayRequest (onResponse) CLEARING localData");
-                            localData.clear();
-
-                            Gson gson = new Gson();
-                            try {
-                                for (int i = 0; i < response.length(); i++) {
-                                    JSONObject json = response.getJSONObject(i);
-                                    Meal mealFromResponse = gson.fromJson(json.toString(), Meal.class);
-                                    localData.add(mealFromResponse);
-                                }
-                            } catch (JSONException e) {
-                                e.printStackTrace();
-                            }
-
-                            Log.i(TAG, "jsonArrayRequest (onResponse): fetchedMeals added to localData. Calling mealAdapter.notifyDataSetChanged();");
-                            mealAdapter.notifyDataSetChanged();
-                        } else {
-                            Log.i(TAG, "jsonArrayRequest (onResponse): response.length <= 0");
-                            Toast.makeText(MainActivity.this, "JSONArray response is empty", Toast.LENGTH_SHORT).show();
-                        }
+                        menuItemInfos.clear();
+                        menuItemInfos.addAll(menuItemInfosFromServer);
+                        adapter.notifyDataSetChanged();
                     }
                 },
                 new Response.ErrorListener() {
                     @Override
                     public void onErrorResponse(VolleyError error) {
-                        Log.e(TAG, "jsonArrayRequest (onErrorResponse): " + error);
+                        // TODO: Handle error
+                        Log.e(TAG, "onErrorResponse(VolleyError)" + error);
                     }
                 });
-        requestQueue.add(jsonArrayRequest);
+
+        requestQueue.add(jsonObjectRequest);
     }
 
-    private void requestPostMeal(MenuItem actionMenuItem, String name, int size, String drink) {
-        Log.i(TAG, "requestPostMeal()");
-        StringRequest stringRequest =
-                new StringRequest(
-                        Request.Method.POST,
-                        URL_ADD_NEW_MEAL,
-                        new Response.Listener<String>() {
-                            @Override
-                            public void onResponse(String response) {
-                                String formatString = "The id of the posted Meal object is: %s";
-                                Log.i(TAG, "requestPostMeal() onResponse(): " + String.format(formatString, response));
+//    private void requestGetAllMeals() {
+//        Log.i(TAG, "requestGetAllMeals()");
+//        JsonArrayRequest jsonArrayRequest = new JsonArrayRequest(
+//                Request.Method.GET,
+//                URL_GET_ALL_MEALS,
+//                null,
+//                new Response.Listener<JSONArray>() {
+//                    @Override
+//                    public void onResponse(JSONArray response) {
+//                        Log.i(TAG, "jsonArrayRequest (onResponse)");
+//
+//                        if (response.length() > 0) {
+//                            Log.i(TAG, "jsonArrayRequest (onResponse): response.length == " + response.length());
+//
+//                            Log.i(TAG, "jsonArrayRequest (onResponse) CLEARING localData");
+//                            localData.clear();
+//
+//                            Gson gson = new Gson();
+//                            try {
+//                                for (int i = 0; i < response.length(); i++) {
+//                                    JSONObject json = response.getJSONObject(i);
+//                                    Meal mealFromResponse = gson.fromJson(json.toString(), Meal.class);
+//                                    localData.add(mealFromResponse);
+//                                }
+//                            } catch (JSONException e) {
+//                                e.printStackTrace();
+//                            }
+//
+//                            Log.i(TAG, "jsonArrayRequest (onResponse): fetchedMeals added to localData. Calling mealAdapter.notifyDataSetChanged();");
+//                            mealAdapter.notifyDataSetChanged();
+//                        } else {
+//                            Log.i(TAG, "jsonArrayRequest (onResponse): response.length <= 0");
+//                            Toast.makeText(MainActivity.this, "JSONArray response is empty", Toast.LENGTH_SHORT).show();
+//                        }
+//                    }
+//                },
+//                new Response.ErrorListener() {
+//                    @Override
+//                    public void onErrorResponse(VolleyError error) {
+//                        Log.e(TAG, "jsonArrayRequest (onErrorResponse): " + error);
+//                    }
+//                });
+//        requestQueue.add(jsonArrayRequest);
+//    }
 
-                                View addMealActionView = actionMenuItem.getActionView();
-                                EditText etName = addMealActionView.findViewWithTag("etName");
-                                etName.setText("");
-                                EditText etSize = addMealActionView.findViewWithTag("etSize");
-                                etSize.setText("");
-                                EditText etDrink = addMealActionView.findViewWithTag("etDrink");
-                                etDrink.setText("");
-
-                                requestGetAllMeals();
-
-                                Log.i(TAG, "requestPostMeal() onResponse() actionMenuItem.collapseActionView() HAPPY path");
-                                actionMenuItem.collapseActionView();
-                            }
-                        },
-                        new Response.ErrorListener() {
-                            @Override
-                            public void onErrorResponse(VolleyError error) {
-                                Log.e(TAG, "requestPostMeal() onErrorResponse(): " + error);
-
-                                Log.e(TAG, "requestPostMeal() onErrorResponse() actionMenuItem.collapseActionView() ERROR path");
-                                actionMenuItem.collapseActionView();
-                            }
-                        }
-                ) {
-                    @Nullable
-                    @Override
-                    protected Map<String, String> getParams() throws AuthFailureError {
-                        Map<String, String> params = new HashMap<String, String>();
-                        params.put("name", name);
-                        params.put("size", Integer.toString(size));
-                        params.put("drink", drink);
-                        return params;
-                    }
-                };
-
-        requestQueue.add(stringRequest);
-    }
+//    private void requestPostMeal(MenuItem actionMenuItem, String name, int size, String drink) {
+//        Log.i(TAG, "requestPostMeal()");
+//        StringRequest stringRequest =
+//                new StringRequest(
+//                        Request.Method.POST,
+//                        URL_ADD_NEW_MEAL,
+//                        new Response.Listener<String>() {
+//                            @Override
+//                            public void onResponse(String response) {
+//                                String formatString = "The id of the posted Meal object is: %s";
+//                                Log.i(TAG, "requestPostMeal() onResponse(): " + String.format(formatString, response));
+//
+//                                View addMealActionView = actionMenuItem.getActionView();
+//                                EditText etName = addMealActionView.findViewWithTag("etName");
+//                                etName.setText("");
+//                                EditText etSize = addMealActionView.findViewWithTag("etSize");
+//                                etSize.setText("");
+//                                EditText etDrink = addMealActionView.findViewWithTag("etDrink");
+//                                etDrink.setText("");
+//
+//                                requestGetAllMeals();
+//
+//                                Log.i(TAG, "requestPostMeal() onResponse() actionMenuItem.collapseActionView() HAPPY path");
+//                                actionMenuItem.collapseActionView();
+//                            }
+//                        },
+//                        new Response.ErrorListener() {
+//                            @Override
+//                            public void onErrorResponse(VolleyError error) {
+//                                Log.e(TAG, "requestPostMeal() onErrorResponse(): " + error);
+//
+//                                Log.e(TAG, "requestPostMeal() onErrorResponse() actionMenuItem.collapseActionView() ERROR path");
+//                                actionMenuItem.collapseActionView();
+//                            }
+//                        }
+//                ) {
+//                    @Nullable
+//                    @Override
+//                    protected Map<String, String> getParams() throws AuthFailureError {
+//                        Map<String, String> params = new HashMap<String, String>();
+//                        params.put("name", name);
+//                        params.put("size", Integer.toString(size));
+//                        params.put("drink", drink);
+//                        return params;
+//                    }
+//                };
+//
+//        requestQueue.add(stringRequest);
+//    }
 }
