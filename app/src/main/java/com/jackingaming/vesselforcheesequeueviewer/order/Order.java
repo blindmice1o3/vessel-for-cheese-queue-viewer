@@ -3,14 +3,14 @@ package com.jackingaming.vesselforcheesequeueviewer.order;
 import java.time.LocalDateTime;
 import java.util.List;
 
-public class MenuItemInfoListWrapper {
+public class Order {
     private LocalDateTime createdOn;
     private List<MenuItemInfo> menuItemInfos;
 
-    public MenuItemInfoListWrapper() {
+    public Order() {
     }
 
-    public MenuItemInfoListWrapper(LocalDateTime createdOn, List<MenuItemInfo> menuItemInfos) {
+    public Order(LocalDateTime createdOn, List<MenuItemInfo> menuItemInfos) {
         this.createdOn = createdOn;
         this.menuItemInfos = menuItemInfos;
     }

@@ -48,7 +48,7 @@ public class MenuItemInfoAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
         viewHolder.getCbHandedOff().setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(CompoundButton compoundButton, boolean b) {
-
+                Toast.makeText(compoundButton.getContext(), "onCheckedChanged()", Toast.LENGTH_SHORT).show();
             }
         });
         viewHolder.getTvId().setText(menuItemInfo.getId());

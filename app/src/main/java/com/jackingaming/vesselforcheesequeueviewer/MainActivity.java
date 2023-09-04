@@ -30,9 +30,8 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.jackingaming.vesselforcheesequeueviewer.order.DataStore;
 import com.jackingaming.vesselforcheesequeueviewer.order.LocalDateTimeTypeAdapter;
-import com.jackingaming.vesselforcheesequeueviewer.order.MenuItemInfo;
-import com.jackingaming.vesselforcheesequeueviewer.order.MenuItemInfoAdapter;
-import com.jackingaming.vesselforcheesequeueviewer.order.MenuItemInfoListWrapper;
+import com.jackingaming.vesselforcheesequeueviewer.order.Order;
+import com.jackingaming.vesselforcheesequeueviewer.order.OrderAdapter;
 
 import org.json.JSONObject;
 
@@ -57,8 +56,8 @@ public class MainActivity extends AppCompatActivity {
 
     //    private List<Meal> localData;
 //    private MealAdapter mealAdapter;
-    private List<MenuItemInfo> menuItemInfos;
-    private MenuItemInfoAdapter adapter;
+    private List<Order> ordersLocal;
+    private OrderAdapter adapter;
     private LinearLayoutManager linearLayoutManager;
     private DividerItemDecoration dividerItemDecoration;
     private RecyclerView recyclerView;
@@ -94,14 +93,26 @@ public class MainActivity extends AppCompatActivity {
 //        meal.setDrink("cola");
 //        localData.add(meal);
 //        mealAdapter = new MealAdapter(localData, itemClickListener);
-        menuItemInfos = new ArrayList<>();
-        adapter = new MenuItemInfoAdapter(menuItemInfos, new MenuItemInfoAdapter.ItemClickListener() {
+
+//        menuItemInfos = new ArrayList<>();
+//        adapter = new MenuItemInfoAdapter(menuItemInfos, new MenuItemInfoAdapter.ItemClickListener() {
+//            @Override
+//            public void onClick(View view, int position) {
+//                Log.i(TAG, "MenuItemInfoAdapter onClick()");
+//
+//                MenuItemInfo menuItemInfo = menuItemInfos.get(position);
+//                Toast.makeText(view.getContext(), menuItemInfo.getId(), Toast.LENGTH_SHORT).show();
+//            }
+//        });
+
+        ordersLocal = new ArrayList<>();
+        adapter = new OrderAdapter(ordersLocal, new OrderAdapter.ItemClickListener() {
             @Override
             public void onClick(View view, int position) {
-                Log.i(TAG, "MenuItemInfoAdapter onClick()");
+                Log.i(TAG, "OrderAdapter onClick()");
 
-                MenuItemInfo menuItemInfo = menuItemInfos.get(position);
-                Toast.makeText(view.getContext(), menuItemInfo.getId(), Toast.LENGTH_SHORT).show();
+                Order order = ordersLocal.get(position);
+                Toast.makeText(view.getContext(), order.getCreatedOn().toString(), Toast.LENGTH_SHORT).show();
             }
         });
         linearLayoutManager = new LinearLayoutManager(this);
@@ -246,38 +257,18 @@ public class MainActivity extends AppCompatActivity {
                     @RequiresApi(api = Build.VERSION_CODES.O)
                     @Override
                     public void onResponse(JSONObject response) {
-                        Log.e(TAG, "START");
-                        // Converts JSON string into MenuItemInfoListWrapper object
-                        Log.e(TAG, response.toString());
+                        Log.i(TAG, "JsonObjectRequest onResponse(JSONObject)");
 
-//                        Gson gson = new GsonBuilder().create();
                         Gson gson = new GsonBuilder()
                                 .registerTypeAdapter(LocalDateTime.class, new LocalDateTimeTypeAdapter())
                                 .create();
                         DataStore dataStore = gson.fromJson(response.toString(), DataStore.class);
-                        Log.e(TAG, dataStore.getData().get(0).getCreatedOn().toString());
 
-                        // TODO: currently just getting the most recent order...
-                        //   doing this to see something on screen...
-                        //   must update adapter from MenuItemInfo to MenuItemInfoListWrapper
-                        List<MenuItemInfoListWrapper> menuItemInfoListWrappersFromServer = dataStore.getData();
-                        if (!menuItemInfoListWrappersFromServer.isEmpty()) {
-                            MenuItemInfoListWrapper menuItemInfoListWrapperMostRecent = menuItemInfoListWrappersFromServer.get(
-                                    menuItemInfoListWrappersFromServer.size() - 1
-                            );
+                        List<Order> ordersFromServer = dataStore.getData();
 
-                            LocalDateTime createdOn = menuItemInfoListWrapperMostRecent.getCreatedOn();
-                            Log.e(TAG, "createdOn: " + createdOn);
-
-                            List<MenuItemInfo> menuItemInfosFromServer = menuItemInfoListWrapperMostRecent.getMenuItemInfos();
-
-                            menuItemInfos.clear();
-                            menuItemInfos.addAll(menuItemInfosFromServer);
-                            adapter.notifyDataSetChanged();
-                        } else {
-                            Log.e(TAG, "menuItemInfoListWrappersFromServer.isEmpty()");
-                        }
-                        Log.e(TAG, "END");
+                        ordersLocal.clear();
+                        ordersLocal.addAll(ordersFromServer);
+                        adapter.notifyDataSetChanged();
                     }
                 },
                 new Response.ErrorListener() {
