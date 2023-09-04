@@ -4,6 +4,8 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.CheckBox;
+import android.widget.CompoundButton;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -43,6 +45,12 @@ public class MenuItemInfoAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
         MenuItemInfoViewHolder viewHolder = (MenuItemInfoViewHolder) holder;
         MenuItemInfo menuItemInfo = menuItemInfos.get(position);
 
+        viewHolder.getCbHandedOff().setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton compoundButton, boolean b) {
+
+            }
+        });
         viewHolder.getTvId().setText(menuItemInfo.getId());
         viewHolder.getTvSize().setText(menuItemInfo.getSize());
 
@@ -67,6 +75,7 @@ public class MenuItemInfoAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
 
     public class MenuItemInfoViewHolder extends RecyclerView.ViewHolder
             implements View.OnClickListener {
+        private CheckBox cbHandedOff;
         private TextView tvId;
         private TextView tvSize;
         private RecyclerView rvCustomizations;
@@ -74,6 +83,7 @@ public class MenuItemInfoAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
         public MenuItemInfoViewHolder(@NonNull View itemView) {
             super(itemView);
 
+            cbHandedOff = itemView.findViewById(R.id.cb_handed_off);
             tvId = itemView.findViewById(R.id.tv_id);
             tvSize = itemView.findViewById(R.id.tv_size);
             rvCustomizations = itemView.findViewById(R.id.rv_customizations);
@@ -86,6 +96,14 @@ public class MenuItemInfoAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
             if (listener != null) {
                 listener.onClick(view, getAdapterPosition());
             }
+        }
+
+        public CheckBox getCbHandedOff() {
+            return cbHandedOff;
+        }
+
+        public void setCbHandedOff(CheckBox cbHandedOff) {
+            this.cbHandedOff = cbHandedOff;
         }
 
         public TextView getTvId() {

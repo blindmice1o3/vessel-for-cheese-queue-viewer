@@ -1,6 +1,7 @@
 package com.jackingaming.vesselforcheesequeueviewer;
 
 import android.content.Context;
+import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.Menu;
@@ -12,6 +13,7 @@ import android.widget.EditText;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 import androidx.recyclerview.widget.DividerItemDecoration;
@@ -26,12 +28,15 @@ import com.android.volley.toolbox.JsonObjectRequest;
 import com.android.volley.toolbox.Volley;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.jackingaming.vesselforcheesequeueviewer.order.DataStore;
+import com.jackingaming.vesselforcheesequeueviewer.order.LocalDateTimeTypeAdapter;
 import com.jackingaming.vesselforcheesequeueviewer.order.MenuItemInfo;
 import com.jackingaming.vesselforcheesequeueviewer.order.MenuItemInfoAdapter;
 import com.jackingaming.vesselforcheesequeueviewer.order.MenuItemInfoListWrapper;
 
 import org.json.JSONObject;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Executors;
@@ -238,16 +243,41 @@ public class MainActivity extends AppCompatActivity {
                 URL_GET_ALL_ORDERS,
                 null,
                 new Response.Listener<JSONObject>() {
+                    @RequiresApi(api = Build.VERSION_CODES.O)
                     @Override
                     public void onResponse(JSONObject response) {
+                        Log.e(TAG, "START");
                         // Converts JSON string into MenuItemInfoListWrapper object
-                        Gson gson = new GsonBuilder().create();
-                        MenuItemInfoListWrapper menuItemInfoListWrapper = gson.fromJson(response.toString(), MenuItemInfoListWrapper.class);
-                        List<MenuItemInfo> menuItemInfosFromServer = menuItemInfoListWrapper.getMenuItemInfos();
+                        Log.e(TAG, response.toString());
 
-                        menuItemInfos.clear();
-                        menuItemInfos.addAll(menuItemInfosFromServer);
-                        adapter.notifyDataSetChanged();
+//                        Gson gson = new GsonBuilder().create();
+                        Gson gson = new GsonBuilder()
+                                .registerTypeAdapter(LocalDateTime.class, new LocalDateTimeTypeAdapter())
+                                .create();
+                        DataStore dataStore = gson.fromJson(response.toString(), DataStore.class);
+                        Log.e(TAG, dataStore.getData().get(0).getCreatedOn().toString());
+
+                        // TODO: currently just getting the most recent order...
+                        //   doing this to see something on screen...
+                        //   must update adapter from MenuItemInfo to MenuItemInfoListWrapper
+                        List<MenuItemInfoListWrapper> menuItemInfoListWrappersFromServer = dataStore.getData();
+                        if (!menuItemInfoListWrappersFromServer.isEmpty()) {
+                            MenuItemInfoListWrapper menuItemInfoListWrapperMostRecent = menuItemInfoListWrappersFromServer.get(
+                                    menuItemInfoListWrappersFromServer.size() - 1
+                            );
+
+                            LocalDateTime createdOn = menuItemInfoListWrapperMostRecent.getCreatedOn();
+                            Log.e(TAG, "createdOn: " + createdOn);
+
+                            List<MenuItemInfo> menuItemInfosFromServer = menuItemInfoListWrapperMostRecent.getMenuItemInfos();
+
+                            menuItemInfos.clear();
+                            menuItemInfos.addAll(menuItemInfosFromServer);
+                            adapter.notifyDataSetChanged();
+                        } else {
+                            Log.e(TAG, "menuItemInfoListWrappersFromServer.isEmpty()");
+                        }
+                        Log.e(TAG, "END");
                     }
                 },
                 new Response.ErrorListener() {
