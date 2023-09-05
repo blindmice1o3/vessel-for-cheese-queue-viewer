@@ -28,11 +28,13 @@ import com.android.volley.toolbox.JsonObjectRequest;
 import com.android.volley.toolbox.Volley;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import com.jackingaming.vesselforcheesequeueviewer.order.DataStore;
+import com.jackingaming.vesselforcheesequeueviewer.order.LocalDateTimeDTO;
 import com.jackingaming.vesselforcheesequeueviewer.order.LocalDateTimeTypeAdapter;
 import com.jackingaming.vesselforcheesequeueviewer.order.Order;
 import com.jackingaming.vesselforcheesequeueviewer.order.OrderAdapter;
+import com.jackingaming.vesselforcheesequeueviewer.order.OrderDTO;
 
+import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.time.LocalDateTime;
@@ -48,7 +50,7 @@ public class MainActivity extends AppCompatActivity {
     //    public static final String URL_ADD_NEW_MEAL = "http://192.168.1.143:8080/meals/add";
 //    public static final String URL_GET_ALL_MEALS = "http://192.168.1.143:8080/meals/all";
 //    public static final String URL_DELETE_MEAL_BY_ID = "http://192.168.1.143:8080/meals/delete";
-    public static final String URL_GET_ALL_ORDERS = "http://192.168.1.143:8080/orders/all";
+    public static final String URL_FETCH_NEWER_ORDERS = "http://192.168.1.143:8080/orders/fetch_newer";
 
     private RequestQueue requestQueue;
     private Toolbar toolbar;
@@ -129,10 +131,24 @@ public class MainActivity extends AppCompatActivity {
         long periodInSeconds = 3L;
         requestRepeatingGetAllMeals = executor.scheduleWithFixedDelay(
                 new Runnable() {
+                    @RequiresApi(api = Build.VERSION_CODES.O)
                     @Override
                     public void run() {
 //                        requestGetAllMeals();
-                        requestGetAllOrders();
+
+                        try {
+                            LocalDateTime timestampNewest = LocalDateTime.of(1942, 4, 20, 16, 20, 0, 1);
+                            if (!ordersLocal.isEmpty()) {
+                                int indexEnd = ordersLocal.size() - 1;
+                                timestampNewest = ordersLocal.get(indexEnd).getCreatedOn();
+                            }
+
+                            requestFetchNewerOrders(
+                                    new LocalDateTimeDTO(timestampNewest)
+                            );
+                        } catch (JSONException e) {
+                            e.printStackTrace();
+                        }
                     }
                 },
                 0,
@@ -246,15 +262,21 @@ public class MainActivity extends AppCompatActivity {
 //        requestQueue.add(stringRequest);
 //    }
 
-    private void requestGetAllOrders() {
-        Log.i(TAG, "requestGetAllOrders()");
+    @RequiresApi(api = Build.VERSION_CODES.O)
+    private void requestFetchNewerOrders(LocalDateTimeDTO localDateTimeDTO) throws JSONException {
+        Log.i(TAG, "requestFetchNewerOrders(LocalDateTimeDTO)");
+
+        Gson gson = new GsonBuilder()
+                .registerTypeAdapter(LocalDateTime.class, new LocalDateTimeTypeAdapter())
+                .create();
+        String localDateTimeDTOAsJsonString = gson.toJson(localDateTimeDTO);
+        JSONObject jsonObject = new JSONObject(localDateTimeDTOAsJsonString);
 
         JsonObjectRequest jsonObjectRequest = new JsonObjectRequest(
-                Request.Method.GET,
-                URL_GET_ALL_ORDERS,
-                null,
+                Request.Method.POST,
+                URL_FETCH_NEWER_ORDERS,
+                jsonObject,
                 new Response.Listener<JSONObject>() {
-                    @RequiresApi(api = Build.VERSION_CODES.O)
                     @Override
                     public void onResponse(JSONObject response) {
                         Log.i(TAG, "JsonObjectRequest onResponse(JSONObject)");
@@ -262,13 +284,17 @@ public class MainActivity extends AppCompatActivity {
                         Gson gson = new GsonBuilder()
                                 .registerTypeAdapter(LocalDateTime.class, new LocalDateTimeTypeAdapter())
                                 .create();
-                        DataStore dataStore = gson.fromJson(response.toString(), DataStore.class);
+                        OrderDTO orderDTO = gson.fromJson(response.toString(), OrderDTO.class);
 
-                        List<Order> ordersFromServer = dataStore.getData();
+                        List<Order> ordersFromServer = orderDTO.getOrders();
 
-                        ordersLocal.clear();
-                        ordersLocal.addAll(ordersFromServer);
-                        adapter.notifyDataSetChanged();
+                        if (!ordersFromServer.isEmpty()) {
+                            Log.e(TAG, "NOT ordersFromServer.isEmpty()... addAll()");
+                            ordersLocal.addAll(ordersFromServer);
+                            adapter.notifyDataSetChanged();
+                        } else {
+                            Log.e(TAG, "ordersFromServer.isEmpty()... do nothing");
+                        }
                     }
                 },
                 new Response.ErrorListener() {
@@ -277,7 +303,8 @@ public class MainActivity extends AppCompatActivity {
                         // TODO: Handle error
                         Log.e(TAG, "onErrorResponse(VolleyError)" + error);
                     }
-                });
+                }
+        );
 
         requestQueue.add(jsonObjectRequest);
     }

@@ -19,7 +19,7 @@ import java.time.format.DateTimeFormatter;
 @RequiresApi(api = Build.VERSION_CODES.O)
 public class LocalDateTimeTypeAdapter
         implements JsonSerializer<LocalDateTime>, JsonDeserializer<LocalDateTime> {
-    private static final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSS");
+    private static final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss");
 
     @Override
     public JsonElement serialize(LocalDateTime localDateTime, Type srcType,
