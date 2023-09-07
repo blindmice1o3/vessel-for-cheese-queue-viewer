@@ -28,7 +28,6 @@ import com.android.volley.toolbox.JsonObjectRequest;
 import com.android.volley.toolbox.Volley;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import com.jackingaming.vesselforcheesequeueviewer.order.LocalDateTimeDTO;
 import com.jackingaming.vesselforcheesequeueviewer.order.LocalDateTimeTypeAdapter;
 import com.jackingaming.vesselforcheesequeueviewer.order.Order;
 import com.jackingaming.vesselforcheesequeueviewer.order.OrderAdapter;
@@ -38,6 +37,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Executors;
@@ -50,7 +50,7 @@ public class MainActivity extends AppCompatActivity {
     //    public static final String URL_ADD_NEW_MEAL = "http://192.168.1.143:8080/meals/add";
 //    public static final String URL_GET_ALL_MEALS = "http://192.168.1.143:8080/meals/all";
 //    public static final String URL_DELETE_MEAL_BY_ID = "http://192.168.1.143:8080/meals/delete";
-    public static final String URL_FETCH_NEWER_ORDERS = "http://192.168.1.143:8080/orders/fetch_newer";
+    public static final String URL_ORDERS = "http://192.168.1.143:8080/orders";
 
     private RequestQueue requestQueue;
     private Toolbar toolbar;
@@ -144,7 +144,7 @@ public class MainActivity extends AppCompatActivity {
                             }
 
                             requestFetchNewerOrders(
-                                    new LocalDateTimeDTO(timestampNewest)
+                                    timestampNewest
                             );
                         } catch (JSONException e) {
                             e.printStackTrace();
@@ -263,19 +263,18 @@ public class MainActivity extends AppCompatActivity {
 //    }
 
     @RequiresApi(api = Build.VERSION_CODES.O)
-    private void requestFetchNewerOrders(LocalDateTimeDTO localDateTimeDTO) throws JSONException {
-        Log.i(TAG, "requestFetchNewerOrders(LocalDateTimeDTO)");
+    private void requestFetchNewerOrders(LocalDateTime localDateTime) throws JSONException {
+        Log.i(TAG, "requestFetchNewerOrders(LocalDateTime)");
 
-        Gson gson = new GsonBuilder()
-                .registerTypeAdapter(LocalDateTime.class, new LocalDateTimeTypeAdapter())
-                .create();
-        String localDateTimeDTOAsJsonString = gson.toJson(localDateTimeDTO);
-        JSONObject jsonObject = new JSONObject(localDateTimeDTOAsJsonString);
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss");
+        String timestampAsString = localDateTime.format(formatter);
 
+        String templateWithRequestParam = URL_ORDERS + "?timestamp=%s";
+        String urlFetchNewerOrders = String.format(templateWithRequestParam, timestampAsString);
         JsonObjectRequest jsonObjectRequest = new JsonObjectRequest(
-                Request.Method.POST,
-                URL_FETCH_NEWER_ORDERS,
-                jsonObject,
+                Request.Method.GET,
+                urlFetchNewerOrders,
+                null,
                 new Response.Listener<JSONObject>() {
                     @Override
                     public void onResponse(JSONObject response) {
