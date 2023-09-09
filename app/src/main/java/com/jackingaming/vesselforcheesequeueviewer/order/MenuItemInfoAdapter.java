@@ -22,6 +22,8 @@ public class MenuItemInfoAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
 
     public interface ItemClickListener {
         void onClick(View view, int position);
+
+        void onCheckBoxClick();
     }
 
     private List<MenuItemInfo> menuItemInfos;
@@ -48,7 +50,10 @@ public class MenuItemInfoAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
         viewHolder.getCbHandedOff().setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(CompoundButton compoundButton, boolean b) {
-                Toast.makeText(compoundButton.getContext(), "onCheckedChanged()", Toast.LENGTH_SHORT).show();
+                Log.i(TAG, "onBindViewHolder() CheckBox for handedOff onCheckedChanged()");
+
+                menuItemInfo.setHandedOff(b);
+                listener.onCheckBoxClick();
             }
         });
         viewHolder.getTvId().setText(menuItemInfo.getId());
@@ -58,7 +63,7 @@ public class MenuItemInfoAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
         StringAdapter adapter = new StringAdapter(menuItemInfo.getMenuItemCustomizations(), new StringAdapter.ItemClickListener() {
             @Override
             public void onClick(View view, int position) {
-                Log.i(TAG, "StringAdapter onClick()");
+                Log.i(TAG, "StringAdapter.onClick()");
 
                 String nameCustomization = menuItemInfo.getMenuItemCustomizations().get(position);
                 Toast.makeText(view.getContext(), nameCustomization, Toast.LENGTH_SHORT).show();

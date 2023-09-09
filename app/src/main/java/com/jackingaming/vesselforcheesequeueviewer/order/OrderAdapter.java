@@ -21,6 +21,8 @@ public class OrderAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> 
 
     public interface ItemClickListener {
         void onClick(View view, int position);
+
+        void onOrderHandedOff(int position);
     }
 
     private List<Order> orders;
@@ -42,6 +44,7 @@ public class OrderAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> 
     @Override
     public void onBindViewHolder(@NonNull RecyclerView.ViewHolder holder, int position) {
         OrderViewHolder viewHolder = (OrderViewHolder) holder;
+        int positionSelected = position;
         Order order = orders.get(position);
 
         viewHolder.getTvTimestamp().setText(order.getCreatedOn().toString());
@@ -50,10 +53,26 @@ public class OrderAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> 
         MenuItemInfoAdapter adapter = new MenuItemInfoAdapter(order.getMenuItemInfos(), new MenuItemInfoAdapter.ItemClickListener() {
             @Override
             public void onClick(View view, int position) {
-                Log.i(TAG, "MenuItemInfoAdapter onClick()");
+                Log.i(TAG, "MenuItemInfoAdapter.onClick()");
 
                 MenuItemInfo menuItemInfo = order.getMenuItemInfos().get(position);
                 Toast.makeText(view.getContext(), menuItemInfo.getId(), Toast.LENGTH_SHORT).show();
+            }
+
+            @Override
+            public void onCheckBoxClick() {
+                Log.i(TAG, "MenuItemInfoAdapter.onCheckBoxClick()");
+
+                int numberOfHandedOff = 0;
+                for (MenuItemInfo menuItemInfo : order.getMenuItemInfos()) {
+                    if (menuItemInfo.isHandedOff()) {
+                        numberOfHandedOff++;
+                    }
+                }
+
+                if (numberOfHandedOff == order.getMenuItemInfos().size()) {
+                    listener.onOrderHandedOff(positionSelected);
+                }
             }
         });
         LinearLayoutManager linearLayoutManager = new LinearLayoutManager(rvMenuItemInfos.getContext());

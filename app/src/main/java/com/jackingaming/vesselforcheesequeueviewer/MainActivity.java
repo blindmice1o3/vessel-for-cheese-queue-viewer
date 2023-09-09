@@ -25,6 +25,7 @@ import com.android.volley.RequestQueue;
 import com.android.volley.Response;
 import com.android.volley.VolleyError;
 import com.android.volley.toolbox.JsonObjectRequest;
+import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -50,22 +51,23 @@ public class MainActivity extends AppCompatActivity {
     //    public static final String URL_ADD_NEW_MEAL = "http://192.168.1.143:8080/meals/add";
 //    public static final String URL_GET_ALL_MEALS = "http://192.168.1.143:8080/meals/all";
 //    public static final String URL_DELETE_MEAL_BY_ID = "http://192.168.1.143:8080/meals/delete";
-    public static final String URL_ORDERS = "http://192.168.1.143:8080/orders";
+    public static final String URL_ORDERS = "http://192.168.1.143:8080/v1/orders";
+    public static final long DELAY_DURATION_IN_SECONDS = 3L;
 
     private RequestQueue requestQueue;
     private Toolbar toolbar;
     private MenuItem actionMenuItem;
 
-    //    private List<Meal> localData;
-//    private MealAdapter mealAdapter;
     private List<Order> ordersLocal;
+    private int indexOrderToDelete = -1;
+
     private OrderAdapter adapter;
     private LinearLayoutManager linearLayoutManager;
     private DividerItemDecoration dividerItemDecoration;
     private RecyclerView recyclerView;
 
     private ScheduledExecutorService executor = Executors.newScheduledThreadPool(1);
-    private ScheduledFuture requestRepeatingGetAllMeals;
+    private ScheduledFuture requestRepeatingFetchNewerOrders;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -76,6 +78,36 @@ public class MainActivity extends AppCompatActivity {
 
         toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
+
+        ordersLocal = new ArrayList<>();
+        adapter = new OrderAdapter(ordersLocal, new OrderAdapter.ItemClickListener() {
+            @Override
+            public void onClick(View view, int position) {
+                Log.i(TAG, "OrderAdapter.onClick()");
+
+                Order order = ordersLocal.get(position);
+                Toast.makeText(view.getContext(), order.getCreatedOn().toString(), Toast.LENGTH_SHORT).show();
+            }
+
+            @Override
+            public void onOrderHandedOff(int position) {
+                Log.i(TAG, "OrderAdapter.onOrderHandedOff(int)");
+
+                Order orderToDelete = ordersLocal.get(position);
+                deleteOrderById(orderToDelete.getId());
+
+                //////////////////////////////
+                indexOrderToDelete = position;
+                //////////////////////////////
+            }
+        });
+        linearLayoutManager = new LinearLayoutManager(this);
+        dividerItemDecoration = new DividerItemDecoration(this, linearLayoutManager.getOrientation());
+
+        recyclerView = findViewById(R.id.recyclerview);
+        recyclerView.setLayoutManager(linearLayoutManager);
+        recyclerView.setAdapter(adapter);
+        recyclerView.addItemDecoration(dividerItemDecoration);
 
 //        localData = new ArrayList<Meal>();
 //        MealAdapter.ItemClickListener itemClickListener = new MealAdapter.ItemClickListener() {
@@ -106,36 +138,18 @@ public class MainActivity extends AppCompatActivity {
 //                Toast.makeText(view.getContext(), menuItemInfo.getId(), Toast.LENGTH_SHORT).show();
 //            }
 //        });
+    }
 
-        ordersLocal = new ArrayList<>();
-        adapter = new OrderAdapter(ordersLocal, new OrderAdapter.ItemClickListener() {
-            @Override
-            public void onClick(View view, int position) {
-                Log.i(TAG, "OrderAdapter onClick()");
+    @Override
+    protected void onResume() {
+        super.onResume();
+        Log.i(TAG, "onResume()");
 
-                Order order = ordersLocal.get(position);
-                Toast.makeText(view.getContext(), order.getCreatedOn().toString(), Toast.LENGTH_SHORT).show();
-            }
-        });
-        linearLayoutManager = new LinearLayoutManager(this);
-        dividerItemDecoration = new DividerItemDecoration(this, linearLayoutManager.getOrientation());
-
-        recyclerView = findViewById(R.id.recyclerview);
-        recyclerView.setLayoutManager(linearLayoutManager);
-//        recyclerView.setAdapter(mealAdapter);
-        recyclerView.setAdapter(adapter);
-        recyclerView.addItemDecoration(dividerItemDecoration);
-
-//        requestGetAllMeals();
-        // TODO: repeated task
-        long periodInSeconds = 3L;
-        requestRepeatingGetAllMeals = executor.scheduleWithFixedDelay(
+        requestRepeatingFetchNewerOrders = executor.scheduleWithFixedDelay(
                 new Runnable() {
                     @RequiresApi(api = Build.VERSION_CODES.O)
                     @Override
                     public void run() {
-//                        requestGetAllMeals();
-
                         try {
                             LocalDateTime timestampNewest = LocalDateTime.of(1942, 4, 20, 16, 20, 0, 1);
                             if (!ordersLocal.isEmpty()) {
@@ -152,16 +166,23 @@ public class MainActivity extends AppCompatActivity {
                     }
                 },
                 0,
-                periodInSeconds,
+                DELAY_DURATION_IN_SECONDS,
                 TimeUnit.SECONDS);
     }
 
     @Override
+    protected void onPause() {
+        super.onPause();
+        Log.i(TAG, "onPause()");
+
+        requestRepeatingFetchNewerOrders.cancel(true);
+    }
+
+    @Override
     protected void onDestroy() {
+        requestQueue.stop();
         super.onDestroy();
         Log.i(TAG, "onDestroy()");
-        requestRepeatingGetAllMeals.cancel(true);
-        requestQueue.stop();
     }
 
     @Override
@@ -262,6 +283,38 @@ public class MainActivity extends AppCompatActivity {
 //        requestQueue.add(stringRequest);
 //    }
 
+    private void deleteOrderById(long id) {
+        Log.i(TAG, "deleteOrderById(long)");
+
+        StringRequest deleteOrderByIdRequest = new StringRequest(
+                Request.Method.DELETE,
+                URL_ORDERS + "/" + String.valueOf(id),
+                new Response.Listener<String>() {
+                    @Override
+                    public void onResponse(String response) {
+                        Log.i(TAG, "deleteOrderById() onResponse(): " + response);
+
+                        Toast.makeText(MainActivity.this, "deleteOrderById() onResponse()", Toast.LENGTH_SHORT).show();
+                        if (indexOrderToDelete != -1) {
+                            ordersLocal.remove(indexOrderToDelete);
+                            adapter.notifyItemRemoved(indexOrderToDelete);
+
+                            ////////////////////////
+                            indexOrderToDelete = -1;
+                            ////////////////////////
+                        }
+                    }
+                },
+                new Response.ErrorListener() {
+                    @Override
+                    public void onErrorResponse(VolleyError error) {
+                        // TODO: Handle error
+                        Log.e(TAG, "deleteOrderById() onErrorResponse(): " + error);
+                    }
+                });
+        requestQueue.add(deleteOrderByIdRequest);
+    }
+
     @RequiresApi(api = Build.VERSION_CODES.O)
     private void requestFetchNewerOrders(LocalDateTime localDateTime) throws JSONException {
         Log.i(TAG, "requestFetchNewerOrders(LocalDateTime)");
@@ -271,7 +324,7 @@ public class MainActivity extends AppCompatActivity {
 
         String templateWithRequestParam = URL_ORDERS + "?timestamp=%s";
         String urlFetchNewerOrders = String.format(templateWithRequestParam, timestampAsString);
-        JsonObjectRequest jsonObjectRequest = new JsonObjectRequest(
+        JsonObjectRequest fetchNewerOrderRequest = new JsonObjectRequest(
                 Request.Method.GET,
                 urlFetchNewerOrders,
                 null,
@@ -305,7 +358,7 @@ public class MainActivity extends AppCompatActivity {
                 }
         );
 
-        requestQueue.add(jsonObjectRequest);
+        requestQueue.add(fetchNewerOrderRequest);
     }
 
 //    private void requestGetAllMeals() {

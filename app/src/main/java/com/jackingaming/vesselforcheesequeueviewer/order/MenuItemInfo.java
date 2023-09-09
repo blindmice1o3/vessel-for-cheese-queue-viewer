@@ -6,6 +6,7 @@ public class MenuItemInfo {
     private String id;
     private String size;
     private List<String> menuItemCustomizations;
+    private boolean handedOff;
 
     public MenuItemInfo() {
     }
@@ -14,6 +15,7 @@ public class MenuItemInfo {
         this.id = id;
         this.size = size;
         this.menuItemCustomizations = menuItemCustomizations;
+        this.handedOff = false;
     }
 
     public String getId() {
@@ -38,5 +40,13 @@ public class MenuItemInfo {
 
     public void setMenuItemCustomizations(List<String> menuItemCustomizations) {
         this.menuItemCustomizations = menuItemCustomizations;
+    }
+
+    public boolean isHandedOff() {
+        return handedOff;
+    }
+
+    public void setHandedOff(boolean handedOff) {
+        this.handedOff = handedOff;
     }
 }
